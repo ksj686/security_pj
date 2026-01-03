@@ -1,0 +1,10 @@
+{
+  "name": "api",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "echo 'dev api'",
+    "build": "echo 'build api'",
+    "test": "echo 'test api'"
+  }
+}

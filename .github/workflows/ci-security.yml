@@ -1,0 +1,80 @@
+# .github/workflows/ci-security.yml
+name: CI Security Pipeline
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read # for actions/checkout
+  security-events: write # for github/codeql-action/upload-sarif
+  actions: read # for slackapi/slack-github-action
+
+jobs:
+  security-analysis:
+    name: Security Analysis
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # --- Phase 2: 코드 레벨 분석 ---
+
+      # 1. SCA: Python 의존성 분석 (pip-audit)
+      - name: Install and run pip-audit
+        run: |
+          pip install pip-audit
+          pip-audit
+
+      # 2. SAST: Semgrep 스캔 (고속)
+      - name: Run Semgrep SAST Scan
+        uses: semgrep/semgrep-action@v2
+        with:
+          # 기본 커뮤니티 정책(p/default)으로 스캔
+          config: >-
+            p/default
+
+      # 3. SAST: CodeQL 분석 (심층) - 초기화
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: "go, javascript, python" # 분석할 언어 지정
+
+      # (여기에 빌드 및 테스트 스텝이 위치합니다)
+      # - name: Build project...
+      # - name: Run tests...
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+
+      # --- Phase 3: 아티팩트 보안 검증 ---
+
+      # 4. Docker 이미지 빌드 (예시)
+      - name: Build Docker image
+        run: |
+          docker build -t my-app:${{ github.sha }} .
+
+      # 5. Container Scanning: Trivy 스캔
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: "my-app:${{ github.sha }}"
+          format: "table"
+          # Critical, High 등급의 취약점이 발견되면 워크플로우 실패 처리
+          exit-code: "1"
+          ignore-unfixed: true
+          vuln-type: "os,library"
+          severity: "CRITICAL,HIGH"
+
+  notify-on-failure:
+    # security-analysis job이 실패했을 때만 실행
+    if: ${{ failure() && github.event_name == 'push' }}
+    needs: [security-analysis]
+    uses: ./.github/workflows/reusable-notify.yml
+    with:
+      status: "failure"
+    secrets: inherit

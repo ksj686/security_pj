@@ -1,0 +1,49 @@
+# .github/workflows/reusable-notify.yml
+name: Reusable Notification
+
+on:
+  workflow_call:
+    inputs:
+      status:
+        required: true
+        type: string
+    secrets:
+      SLACK_WEBHOOK_URL:
+        required: false
+      DISCORD_WEBHOOK_URL:
+        required: false
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Slack Notification on Failure
+        if: "${{ inputs.status == 'failure' && secrets.SLACK_WEBHOOK_URL != '' }}"
+        uses: slackapi/slack-github-action@v1.26.0
+        with:
+          payload: |
+            {
+              "text": "CI/CD Pipeline Failed! 🚨",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Repository:* ${{ github.repository }}\n*Event:* ${{ github.event_name }}\n*Author:* ${{ github.actor }}\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Workflow Run>"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Send Discord Notification on Failure
+        if: "${{ inputs.status == 'failure' && secrets.DISCORD_WEBHOOK_URL != '' }}"
+        uses: tsg-oss/discord-webhook-action@v1
+        with:
+          webhook_url: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          title: "CI/CD Pipeline Failed! 🚨"
+          description: |
+            Repository: ${{ github.repository }}
+            Author: ${{ github.actor }}
+            Link: <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}>

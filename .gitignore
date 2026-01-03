@@ -1,0 +1,29 @@
+# Node.js
+node_modules
+dist
+.env
+*.log
+pnpm-debug.log
+
+# Python
+__pycache__/
+*.pyc
+.venv
+.env
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build artifacts and caches
+/.turbo
+/.next/
+/coverage/
+.tsbuildinfo
+
+# Gemini CLI
+.gemini/

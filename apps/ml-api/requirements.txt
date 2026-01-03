@@ -1,0 +1,4 @@
+# Add python dependencies here
+# e.g.,
+# fastapi
+# uvicorn
