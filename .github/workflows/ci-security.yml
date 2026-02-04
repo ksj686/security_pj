@@ -32,11 +32,14 @@ jobs:
 
       # 2. SAST: Semgrep 스캔 (고속)
       - name: Run Semgrep SAST Scan
-        uses: semgrep/semgrep-action@v2
+        uses: docker://semgrep/semgrep:latest
         with:
-          # 기본 커뮤니티 정책(p/default)으로 스캔
-          config: >-
-            p/default
+          args: semgrep scan --sarif --output semgrep-results.sarif --config p/default
+      - name: Upload Semgrep SARIF results to GitHub Security Dashboard
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: semgrep-results.sarif
+        if: always() # 스캔 실패 시에도 SARIF 파일 업로드
 
       # 3. SAST: CodeQL 분석 (심층) - 초기화
       - name: Initialize CodeQL
