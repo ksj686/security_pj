@@ -35,15 +35,17 @@ jobs:
         uses: docker://semgrep/semgrep:latest
         with:
           args: semgrep scan --sarif --output semgrep-results.sarif --config p/default
+        working-directory: ${{ github.workspace }}
       - name: Upload Semgrep SARIF results to GitHub Security Dashboard
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: semgrep-results.sarif
         if: always() # 스캔 실패 시에도 SARIF 파일 업로드
+        working-directory: ${{ github.workspace }}
 
       # 3. SAST: CodeQL 분석 (심층) - 초기화
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@v4
         with:
           languages: "go, javascript, python" # 분석할 언어 지정
 
@@ -52,7 +54,7 @@ jobs:
       # - name: Run tests...
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@v4
 
       # --- Phase 3: 아티팩트 보안 검증 ---
 
