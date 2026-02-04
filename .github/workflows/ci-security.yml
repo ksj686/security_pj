@@ -77,4 +77,6 @@ jobs:
     uses: ./.github/workflows/reusable-notify.yml
     with:
       status: "failure"
+      enable_slack_notification: ${{ secrets.SLACK_WEBHOOK_URL != '' }}
+      enable_discord_notification: ${{ secrets.DISCORD_WEBHOOK_URL != '' }}
     secrets: inherit

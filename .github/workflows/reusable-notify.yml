@@ -7,6 +7,12 @@ on:
       status:
         required: true
         type: string
+      enable_slack_notification:
+        required: true
+        type: boolean
+      enable_discord_notification:
+        required: true
+        type: boolean
     secrets:
       SLACK_WEBHOOK_URL:
         required: false
@@ -18,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Send Slack Notification on Failure
-        if: "${{ inputs.status == 'failure' && length(secrets.SLACK_WEBHOOK_URL) > 0 }}"
+        if: "${{ inputs.status == 'failure' && inputs.enable_slack_notification }}"
         uses: slackapi/slack-github-action@v1.26.0
         with:
           payload: |
@@ -38,7 +44,7 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
       - name: Send Discord Notification on Failure
-        if: "${{ inputs.status == 'failure' && length(secrets.DISCORD_WEBHOOK_URL) > 0 }}"
+        if: "${{ inputs.status == 'failure' && inputs.enable_discord_notification }}"
         uses: tsg-oss/discord-webhook-action@v1
         with:
           webhook_url: ${{ secrets.DISCORD_WEBHOOK_URL }}
