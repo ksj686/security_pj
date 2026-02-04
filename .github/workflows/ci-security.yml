@@ -32,14 +32,13 @@ jobs:
 
       # 2. SAST: Semgrep 스캔 (고속)
       - name: Run Semgrep SAST Scan
-        uses: docker://semgrep/semgrep:latest
-        with:
-          args: semgrep scan --sarif --output semgrep-results.sarif --config p/default
+        run: |
+          docker run --rm -v "${{ github.workspace }}:/src" semgrep/semgrep:latest semgrep scan --sarif --output /src/semgrep-results.sarif --config p/default
       - name: Upload Semgrep SARIF results to GitHub Security Dashboard
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: semgrep-results.sarif
-        if: always() # 스캔 실패 시에도 SARIF 파일 업로드
+          if: always() # 스캔 실패 시에도 SARIF 파일 업로드
 
       # 3. SAST: CodeQL 분석 (심층) - 초기화
       - name: Initialize CodeQL
@@ -87,7 +86,7 @@ jobs:
 
   notify-on-failure:
     # security-analysis job이 실패했을 때만 실행
-    if: ${{ failure() && github.event_name == 'push' }}
+    if: ${{ failure() && (github.event_name == 'push' || github.event_name == 'pull_request') }}
     needs: [security-analysis, check-notification-status] # Add dependency on new job
     uses: ./.github/workflows/reusable-notify.yml
     with:
