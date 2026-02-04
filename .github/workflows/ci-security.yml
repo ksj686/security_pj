@@ -12,6 +12,7 @@ permissions:
   contents: read # for actions/checkout
   security-events: write # for github/codeql-action/upload-sarif
   actions: read # for slackapi/slack-github-action
+  secrets: read # for accessing secrets like webhook URLs
 
 jobs:
   security-analysis:
