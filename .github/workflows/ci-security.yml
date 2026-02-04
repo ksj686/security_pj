@@ -12,7 +12,6 @@ permissions:
   contents: read # for actions/checkout
   security-events: write # for github/codeql-action/upload-sarif
   actions: read # for slackapi/slack-github-action
-  secrets: read # for accessing secrets like webhook URLs
 
 jobs:
   security-analysis:
@@ -71,13 +70,25 @@ jobs:
           vuln-type: "os,library"
           severity: "CRITICAL,HIGH"
 
+  check-notification-status:
+    runs-on: ubuntu-latest
+    outputs:
+      enable_slack: ${{ steps.check.outputs.enable_slack }}
+      enable_discord: ${{ steps.check.outputs.enable_discord }}
+    steps:
+      - name: Check if notification secrets are configured
+        id: check
+        run: |
+          echo "enable_slack=${{ secrets.SLACK_WEBHOOK_URL != '' }}" >> $GITHUB_OUTPUT
+          echo "enable_discord=${{ secrets.DISCORD_WEBHOOK_URL != '' }}" >> $GITHUB_OUTPUT
+
   notify-on-failure:
     # security-analysis job이 실패했을 때만 실행
     if: ${{ failure() && github.event_name == 'push' }}
-    needs: [security-analysis]
+    needs: [security-analysis, check-notification-status] # Add dependency on new job
     uses: ./.github/workflows/reusable-notify.yml
     with:
       status: "failure"
-      enable_slack_notification: ${{ secrets.SLACK_WEBHOOK_URL != '' }}
-      enable_discord_notification: ${{ secrets.DISCORD_WEBHOOK_URL != '' }}
+      enable_slack_notification: ${{ needs.check-notification-status.outputs.enable_slack }}
+      enable_discord_notification: ${{ needs.check-notification-status.outputs.enable_discord }}
     secrets: inherit
